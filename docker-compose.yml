@@ -1,0 +1,28 @@
+# Snippet for infrastructure/ — join the same Docker network as Open WebUI so
+# http://openrouter-image-gateway:8400/v1 resolves from the Open WebUI container.
+#
+# Adjust `networks.<name>` to the external network your Open WebUI compose
+# project creates (e.g. `open-webui_default`); check with `docker network ls`.
+services:
+  openrouter-image-gateway:
+    build: .
+    # image: ghcr.io/<you>/openrouter-image-gateway:latest  # if prebuilt
+    container_name: openrouter-image-gateway
+    restart: unless-stopped
+    ports:
+      - "8400:8400"
+    environment:
+      # Hardened mode: clients authenticate with GATEWAY_API_KEY, upstream calls
+      # use OPENROUTER_API_KEY. Leave GATEWAY_API_KEY unset for passthrough
+      # mode (client key is forwarded as-is; keep it off the public internet).
+      GATEWAY_API_KEY: ${GATEWAY_API_KEY:-}
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY:-}
+      # DEFAULT_MODEL: google/gemini-3.1-flash-image
+      # MODEL_ALIASES: '{"dall-e-3": "google/gemini-3.1-flash-image"}'
+      LOG_LEVEL: info
+    networks:
+      - open-webui
+
+networks:
+  open-webui:
+    external: true
